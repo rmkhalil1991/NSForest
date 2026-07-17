@@ -44,9 +44,8 @@ def dendrogram(adata, cluster_header, *, tl_kwargs = {}, pl_kwargs = {}, save = 
             save = "png"
         sc.settings.verbosity = 0
         sc.settings.figdir = output_folder
-        save = f"dendrogram_{outputfilename_suffix}.{save}"
-        print(f"Saving dendrogram as...\n{output_folder}{save}")
-    if not adata.obsm or "X_pca" not in adata.obsm: 
+        print(f"Saving dendrogram as...\n{output_folder}dendogram_{outputfilename_suffix}.{save}")
+    if not adata.obsm and "X_pca" not in adata.obsm: 
         sc.pp.pca(adata)
     sc.tl.dendrogram(adata, cluster_header, use_rep="X_pca", **tl_kwargs)
     if not figsize: 
@@ -56,7 +55,7 @@ def dendrogram(adata, cluster_header, *, tl_kwargs = {}, pl_kwargs = {}, save = 
         figsize = (fig_width, fig_height)
     with plt.rc_context({"figure.figsize": figsize}): 
         # sc.pl.dendrogram(adata, cluster_header, save = save, **pl_kwargs)
-        if save: sc.pl.dendrogram(adata, cluster_header, **pl_kwargs).figure.savefig(save)
+        if save: sc.pl.dendrogram(adata, cluster_header, save=f"_{outputfilename_suffix}.{save}", **pl_kwargs)
         else: sc.pl.dendrogram(adata, cluster_header, **pl_kwargs)
     return
 
@@ -179,7 +178,7 @@ def prep_binary_scores(adata, cluster_header, medians_header = "medians_"):
 
     return adata
 
-def plot_varm(adata, varm_key, bins = 25, nonzero = False, scale = None, figsize = (6, 4), show = True, save = False, output_folder = ""): 
+def plot_varm(adata, varm_key, nonzero = False, scale = None, figsize = (6, 4), show = True, save = False, output_folder = ""): 
     """\
     Plotting histogram of median expression per gene per cluster.  
 
@@ -215,10 +214,10 @@ def plot_varm(adata, varm_key, bins = 25, nonzero = False, scale = None, figsize
     else: 
         values = adata.varm[varm_key].unstack()
 
-    plt.hist(values, bins = bins)
+    plt.hist(values, bins = 100)
 
     # If y-axis is log scaled
-    if scale: plt.yscale(scale)
+    if scale == "log": plt.yscale("log")
     plt.xlabel(varm_key)
 
     # Adding title
@@ -320,7 +319,7 @@ def spaceTx_genefilter(adata, lower_percentile = 0.1, upper_percentile = 0.99, m
         tx_length = pd.merge(tx_length, annotation_txLength[[col, "tx_length"]], on = col, how = "left").sort_values("tx_length")
         tx_length = tx_length.drop_duplicates(col, keep = "first")
         tx_length.index = tx_length[col]
-        tx_length = tx_length.reindex(adata.var.index)
+        tx_length = tx_length.reindex(adata.var.index) # added to fix indexing bug
         ind_selected_txLength = tx_length["tx_length"] > min_txLength
         ## select genes that pass the txLength filter
         print(f'FILTER 2: {sum(ind_selected_txLength)} out of {adata.n_vars} total genes passed the transcript length filter (min_txLength = {min_txLength}).')
