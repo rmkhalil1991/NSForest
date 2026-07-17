@@ -15,9 +15,9 @@ git clone https://github.com/NLM-DIR/NSForest.git
 
 cd NSForest
 
-conda env create -f nsForest\_env.yml
+conda env create -f nsForest_env.yml
 
-conda activate nsForest\_env
+conda activate nsForest_env
 
 pip install .
 ```
